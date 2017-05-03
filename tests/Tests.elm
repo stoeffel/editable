@@ -1,6 +1,7 @@
 module Tests exposing (..)
 
 import Test exposing (..)
+import Fuzz exposing (..)
 import Expect
 import Editable
 
@@ -12,21 +13,16 @@ all =
             [ test "Creates a unsaved Editable" <|
                 \() ->
                     Editable.init "Hello"
-                        |> Expect.all
-                            [ Editable.isSaved >> Expect.equal False
-                            , Editable.hasChanged >> Expect.equal False
-                            , Editable.edit "foo" >> Editable.hasChanged >> Expect.equal True
-                            ]
+                        |> Editable.isSaved
+                        >> Expect.equal False
             ]
         , describe "#save"
             [ test "saves an unsaved Editable" <|
                 \() ->
                     Editable.init "Hello"
                         |> Editable.save
-                        |> Expect.all
-                            [ Editable.isSaved >> Expect.equal True
-                            , Editable.hasChanged >> Expect.equal False
-                            ]
+                        |> Editable.isSaved
+                        >> Expect.equal True
             ]
         , describe "#cancel"
             [ test "reverts an unsaved Editable back to it's original value" <|
@@ -36,7 +32,6 @@ all =
                         |> Editable.cancel
                         |> Expect.all
                             [ Editable.isSaved >> Expect.equal True
-                            , Editable.hasChanged >> Expect.equal False
                             , Editable.value >> Expect.equal "Hello"
                             ]
             ]
@@ -54,8 +49,42 @@ all =
                             , Editable.save
                                 >> Editable.value
                                 >> Expect.equal "Foo"
-                            , Editable.hasChanged
-                                >> Expect.equal True
                             ]
+            ]
+        , describe "functor"
+            [ fuzz string "identity" <|
+                \x ->
+                    Editable.init x
+                        |> Editable.map identity
+                        |> Expect.equal (Editable.init x)
+            , fuzz string "identity (saved)" <|
+                \x ->
+                    Editable.init x
+                        |> Editable.save
+                        |> Editable.map identity
+                        |> Expect.equal
+                            (Editable.init x
+                                |> Editable.save
+                            )
+            , fuzz string "composition" <|
+                \x ->
+                    Editable.init x
+                        |> Editable.map ((++) "!" >> (++) "?")
+                        |> Expect.equal
+                            (Editable.init x
+                                |> Editable.map ((++) "!")
+                                |> Editable.map ((++) "?")
+                            )
+            , fuzz string "composition (saved)" <|
+                \x ->
+                    Editable.init x
+                        |> Editable.save
+                        |> Editable.map ((++) "!" >> (++) "?")
+                        |> Expect.equal
+                            (Editable.init x
+                                |> Editable.save
+                                |> Editable.map ((++) "!")
+                                |> Editable.map ((++) "?")
+                            )
             ]
         ]
