@@ -6,12 +6,13 @@ module Editable
         , map
         , save
         , update
+        , value
         )
 
 {-| Editable represents a value that can be read-only or editable.
 `ReadOnly a` holds the locked value and `Editable a a`  holds both the old and the newly modified value.
 
-@docs Editable, cancel, edit, map, save, update
+@docs Editable, cancel, edit, map, save, update, value
 -}
 
 
@@ -117,3 +118,21 @@ cancel x =
 
         ReadOnly _ ->
             x
+
+
+{-| Returns the current value of an Editable.
+
+    Editable.ReadOnly "old"
+        |> Editable.value  --> "old"
+
+    Editable.Editable "old" "new
+        |> Editable.value  --> "new"
+-}
+value : Editable a -> a
+value x =
+    case x of
+        Editable _ value ->
+            value
+
+        ReadOnly value ->
+            value

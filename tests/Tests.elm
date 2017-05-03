@@ -93,4 +93,16 @@ all =
                         |> Editable.cancel
                         |> Expect.equal (ReadOnly a)
             ]
+        , describe "#value"
+            [ fuzz2 string string "returns the modified value of a Editable." <|
+                \a b ->
+                    Editable a b
+                        |> Editable.value
+                        |> Expect.equal b
+            , fuzz string "returns the value of a ReadOnly." <|
+                \a ->
+                    ReadOnly a
+                        |> Editable.value
+                        |> Expect.equal a
+            ]
         ]
