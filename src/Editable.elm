@@ -7,13 +7,14 @@ module Editable
         , isSaved
         , map
         , save
+        , toMaybe
         , value
         )
 
 {-| Editable represents a value that can be modified. It offers a function to either save or cancel a changed value. This means the value has two different states `Saved` and `Unsaved`.
 `Saved a` holds the saved value and `Unsaved a a`  holds both the saved and the newly modified value.
 
-@docs Editable, cancel, edit, init, isSaved, map, save, value
+@docs Editable, cancel, edit, init, isSaved, map, save, toMaybe, value
 -}
 
 
@@ -42,9 +43,9 @@ init x =
 
 {-| Save a modified value. This puts the modified value into the context of `Saved`.
 
-    Editable.init "hello"        -- Unsaved "hello" "hello"
-        |> Editable.edit "world" -- Unsaved "hello" "world"
-        |> Editable.save         -- Saved "world"
+    Editable.init "Hello"        -- Unsaved "Hello" "Hello"
+        |> Editable.edit "World" -- Unsaved "Hello" "World"
+        |> Editable.save         -- Saved "World"
 
 -}
 save : Editable a -> Editable a
@@ -59,9 +60,9 @@ save x =
 
 {-| Cancels a modified value. This puts the old value into the context of `Saved`.
 
-    Editable.init "hello"        -- Unsaved "hello" "hello"
-        |> Editable.edit "world" -- Unsaved "hello" "world"
-        |> Editable.cancel       -- Saved "hello"
+    Editable.init "Hello"        -- Unsaved "Hello" "Hello"
+        |> Editable.edit "World" -- Unsaved "Hello" "World"
+        |> Editable.cancel       -- Saved "Hello"
 
 -}
 cancel : Editable a -> Editable a
@@ -76,12 +77,12 @@ cancel x =
 
 {-| Edit an `Editable` value.
 
-    Editable.init "hello"        -- Unsaved "hello" "hello"
-        |> Editable.edit "world" -- Unsaved "hello" "world"
+    Editable.init "Hello"        -- Unsaved "Hello" "Hello"
+        |> Editable.edit "World" -- Unsaved "Hello" "World"
 
-    Editable.init "hello"        -- Unsaved "hello" "hello"
-        |> Editable.save         -- Saved "hello"
-        |> Editable.edit "world" -- Unsaved "hello" "world"
+    Editable.init "Hello"        -- Unsaved "Hello" "Hello"
+        |> Editable.save         -- Saved "Hello"
+        |> Editable.edit "World" -- Unsaved "Hello" "World"
 
 -}
 edit : a -> Editable a -> Editable a
@@ -96,13 +97,13 @@ edit modified x =
 
 {-| Extract the value of an `Editable`.
 
-    Editable.init "hello"        -- Unsaved "hello" "hello"
-        |> Editable.edit "world" -- Unsaved "hello" "world"
-        |> Editable.value        -- "world"
+    Editable.init "Hello"        -- Unsaved "Hello" "Hello"
+        |> Editable.edit "World" -- Unsaved "Hello" "World"
+        |> Editable.value        -- "World"
 
-    Editable.init "hello" -- Unsaved "hello" "hello"
-        |> Editable.save  -- Saved "hello"
-        |> Editable.value -- "hello"
+    Editable.init "Hello" -- Unsaved "Hello" "Hello"
+        |> Editable.save  -- Saved "Hello"
+        |> Editable.value -- "Hello"
 
 -}
 value : Editable a -> a
@@ -117,13 +118,13 @@ value x =
 
 {-| Apply a function to an `Editable`.
 
-    Editable.init "hello"              -- Unsaved "hello" "hello"
-        |> Editable.map String.toUpper -- Unsaved "hello" "HELLO"
+    Editable.init "Hello"              -- Unsaved "Hello" "Hello"
+        |> Editable.map String.toUpper -- Unsaved "Hello" "HELLO"
 
-    Editable.init "hello"              -- Unsaved "hello" "hello"
-        |> Editable.edit "world"       -- Unsaved "hello" "world"
-        |> Editable.save               -- Saved "world"
-        |> Editable.map String.toUpper -- Saved "world"
+    Editable.init "Hello"              -- Unsaved "Hello" "Hello"
+        |> Editable.edit "World"       -- Unsaved "Hello" "World"
+        |> Editable.save               -- Saved "World"
+        |> Editable.map String.toUpper -- Saved "World"
 
 -}
 map : (a -> a) -> Editable a -> Editable a
@@ -136,13 +137,33 @@ map f x =
             Saved saved
 
 
+{-| Convert to a `Maybe`. It's `Nothing` if the value is `Unsaved`.
+
+    Editable.init "Hello"   -- Unsaved "Hello" "Hello"
+        |> Editable.toMaybe -- Nothing
+
+    Editable.init "Hello"   -- Unsaved "Hello" "Hello"
+        |> Editable.save    -- Saved "Hello"
+        |> Editable.toMaybe -- Just "Hello"
+
+-}
+toMaybe : Editable a -> Maybe a
+toMaybe x =
+    case x of
+        Unsaved _ _ ->
+            Nothing
+
+        Saved saved ->
+            Just saved
+
+
 {-| Check if a value is saved.
 
-    Editable.init "hello"   -- Unsaved "hello" "hello"
+    Editable.init "Hello"   -- Unsaved "Hello" "Hello"
         |> Editable.isSaved -- False
 
-    Editable.init "hello"   -- Unsaved "hello" "hello"
-        |> Editable.save    -- Saved "hello"
+    Editable.init "Hello"   -- Unsaved "Hello" "Hello"
+        |> Editable.save    -- Saved "Hello"
         |> Editable.isSaved -- True
 
 -}

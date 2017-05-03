@@ -51,6 +51,19 @@ all =
                                 >> Expect.equal "Foo"
                             ]
             ]
+        , describe "#toMaybe"
+            [ test "returns Nothing if it's Unsaved" <|
+                \() ->
+                    Editable.init "Hello"
+                        |> Editable.toMaybe
+                        |> Expect.equal Nothing
+            , test "returns Just if it's Saved" <|
+                \() ->
+                    Editable.init "Hello"
+                        |> Editable.save
+                        |> Editable.toMaybe
+                        |> Expect.equal (Just "Hello")
+            ]
         , describe "functor"
             [ fuzz string "identity" <|
                 \x ->
