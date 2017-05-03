@@ -1,177 +1,119 @@
 module Editable
     exposing
-        ( Editable(Unsaved, Saved)
+        ( Editable(Editable, ReadOnly)
         , cancel
         , edit
-        , init
-        , isSaved
         , map
         , save
-        , toMaybe
-        , value
+        , update
         )
 
-{-| Editable represents a value that can be modified. It offers a function to either save or cancel a changed value. This means the value has two different states `Saved` and `Unsaved`.
-`Saved a` holds the saved value and `Unsaved a a`  holds both the saved and the newly modified value.
+{-| Editable represents a value that can be read-only or editable.
+`ReadOnly a` holds the locked value and `Editable a a`  holds both the old and the newly modified value.
 
-@docs Editable, cancel, edit, init, isSaved, map, save, toMaybe, value
+@docs Editable, cancel, edit, map, save, update
 -}
 
 
-{-| An `Editable` value is either `Saved` or `Unsaved`.
+{-| An `Editable` value is either `ReadOnly` or `Editable`.
 
     view : Editable String -> Html msg
     view editable =
         case editable of
-            Unsaved saved modified ->
+            Editable saved modified ->
                 input [ defaultValue modified ] []
-            Saved saved ->
+            ReadOnly saved ->
                 text saved
 
 -}
 type Editable a
-    = Unsaved a a
-    | Saved a
+    = Editable a a
+    | ReadOnly a
 
 
-{-| Create a `Editable` value. It is created as `Unsaved`.
--}
-init : a -> Editable a
-init x =
-    Unsaved x x
+{-| Makes a `ReadOnly` value `Editable`.
 
-
-{-| Save a modified value. This puts the modified value into the context of `Saved`.
-
-    Editable.init "Hello"        -- Unsaved "Hello" "Hello"
-        |> Editable.edit "World" -- Unsaved "Hello" "World"
-        |> Editable.save         -- Saved "World"
+    Editable.ReadOnly "Hello"
+        |> Editable.update "World" --> ReadOnly "Hello"
+        |> Editable.edit           --> Editable "Hello" "Hello"
+        |> Editable.update "World" --> Editable "Hello" "World"
 
 -}
-save : Editable a -> Editable a
-save x =
+edit : Editable a -> Editable a
+edit x =
     case x of
-        Unsaved saved modified ->
-            Saved modified
-
-        Saved _ ->
+        Editable _ _ ->
             x
 
-
-{-| Cancels a modified value. This puts the old value into the context of `Saved`.
-
-    Editable.init "Hello"        -- Unsaved "Hello" "Hello"
-        |> Editable.edit "World" -- Unsaved "Hello" "World"
-        |> Editable.cancel       -- Saved "Hello"
-
--}
-cancel : Editable a -> Editable a
-cancel x =
-    case x of
-        Unsaved saved _ ->
-            Saved saved
-
-        Saved _ ->
-            x
-
-
-{-| Edit an `Editable` value.
-
-    Editable.init "Hello"        -- Unsaved "Hello" "Hello"
-        |> Editable.edit "World" -- Unsaved "Hello" "World"
-
-    Editable.init "Hello"        -- Unsaved "Hello" "Hello"
-        |> Editable.save         -- Saved "Hello"
-        |> Editable.edit "World" -- Unsaved "Hello" "World"
-
--}
-edit : a -> Editable a -> Editable a
-edit modified x =
-    case x of
-        Unsaved saved _ ->
-            Unsaved saved modified
-
-        Saved saved ->
-            Unsaved saved modified
-
-
-{-| Extract the value of an `Editable`.
-
-    Editable.init "Hello"        -- Unsaved "Hello" "Hello"
-        |> Editable.edit "World" -- Unsaved "Hello" "World"
-        |> Editable.value        -- "World"
-
-    Editable.init "Hello" -- Unsaved "Hello" "Hello"
-        |> Editable.save  -- Saved "Hello"
-        |> Editable.value -- "Hello"
-
--}
-value : Editable a -> a
-value x =
-    case x of
-        Unsaved saved modified ->
-            modified
-
-        Saved saved ->
-            saved
+        ReadOnly value ->
+            Editable value value
 
 
 {-| Apply a function to an `Editable`.
 
-    Editable.init "Hello"              -- Unsaved "Hello" "Hello"
-        |> Editable.map String.toUpper -- Unsaved "Hello" "HELLO"
+    Editable.ReadOnly "Hello"
+        |> Editable.map String.toUpper --> ReadOnly "Hello"
 
-    Editable.init "Hello"              -- Unsaved "Hello" "Hello"
-        |> Editable.edit "World"       -- Unsaved "Hello" "World"
-        |> Editable.save               -- Saved "World"
-        |> Editable.map String.toUpper -- Saved "World"
+    Editable.Editable "Hello" "Hello"
+        |> Editable.map String.toUpper --> Editable "Hello" "HELLO"
 
 -}
 map : (a -> a) -> Editable a -> Editable a
 map f x =
     case x of
-        Unsaved saved modified ->
-            Unsaved saved (f modified)
+        Editable saved modified ->
+            Editable saved (f modified)
 
-        Saved saved ->
-            Saved saved
+        ReadOnly saved ->
+            ReadOnly saved
 
 
-{-| Convert to a `Maybe`. It's `Nothing` if the value is `Unsaved`.
+{-| Updates an `Editable` and doesn't change a `ReadOnly`.
 
-    Editable.init "Hello"   -- Unsaved "Hello" "Hello"
-        |> Editable.toMaybe -- Nothing
+    Editable.ReadOnly "Hello"
+        |> Editable.update "World"    --> ReadOnly "Hello"
 
-    Editable.init "Hello"   -- Unsaved "Hello" "Hello"
-        |> Editable.save    -- Saved "Hello"
-        |> Editable.toMaybe -- Just "Hello"
+    Editable.Editable "Hello" "Hello"
+        |> Editable.update "World"    --> Editable "Hello" "World"
 
 -}
-toMaybe : Editable a -> Maybe a
-toMaybe x =
+update : a -> Editable a -> Editable a
+update value =
+    map (always value)
+
+
+{-| Save a modified value. This puts the modified value into the context of `ReadOnly`.
+
+    Editable.Editable "Hello" "World"
+        |> Editable.save --> ReadOnly "World"
+
+    Editable.ReadOnly "Hello"
+        |> Editable.edit           --> Editable "Hello" "Hello"
+        |> Editable.update "World" --> Editable "Hello" "World"
+        |> Editable.save           --> ReadOnly "World"
+
+-}
+save : Editable a -> Editable a
+save x =
     case x of
-        Unsaved _ _ ->
-            Nothing
+        Editable _ modified ->
+            ReadOnly modified
 
-        Saved saved ->
-            Just saved
+        ReadOnly _ ->
+            x
 
 
-{-| Check if a value is saved.
+{-| Cancels a modified value. This puts the old value into the context of `ReadOnly`.
 
-    Editable.init "Hello"   -- Unsaved "Hello" "Hello"
-        |> Editable.isSaved -- False
-
-    Editable.init "Hello"   -- Unsaved "Hello" "Hello"
-        |> Editable.save    -- Saved "Hello"
-        |> Editable.isSaved -- True
+    Editable.Editable "Hello" "World"
+        |> Editable.cancel       --> ReadOnly "Hello"
 
 -}
-isSaved : Editable a -> Bool
-isSaved editable =
-    case editable of
-        Unsaved _ _ ->
-            False
+cancel : Editable a -> Editable a
+cancel x =
+    case x of
+        Editable value _ ->
+            ReadOnly value
 
-        Saved _ ->
-            True
+        ReadOnly _ ->
+            x
