@@ -33,10 +33,10 @@ type Editable a
 
 {-| Makes a `ReadOnly` value `Editable`.
 
-    Editable.ReadOnly "Hello"
-        |> Editable.update "World" --> ReadOnly "Hello"
-        |> Editable.edit           --> Editable "Hello" "Hello"
-        |> Editable.update "World" --> Editable "Hello" "World"
+    Editable.ReadOnly "old"
+        |> Editable.update "new" --> ReadOnly "old"
+        |> Editable.edit         --> Editable "old" "old"
+        |> Editable.update "new" --> Editable "old" "new"
 
 -}
 edit : Editable a -> Editable a
@@ -51,11 +51,11 @@ edit x =
 
 {-| Apply a function to an `Editable`.
 
-    Editable.ReadOnly "Hello"
-        |> Editable.map String.toUpper --> ReadOnly "Hello"
+    Editable.ReadOnly "old"
+        |> Editable.map String.toUpper --> ReadOnly "old"
 
-    Editable.Editable "Hello" "Hello"
-        |> Editable.map String.toUpper --> Editable "Hello" "HELLO"
+    Editable.Editable "old" "old"
+        |> Editable.map String.toUpper --> Editable "old" "OLD"
 
 -}
 map : (a -> a) -> Editable a -> Editable a
@@ -70,11 +70,11 @@ map f x =
 
 {-| Updates an `Editable` and doesn't change a `ReadOnly`.
 
-    Editable.ReadOnly "Hello"
-        |> Editable.update "World"    --> ReadOnly "Hello"
+    Editable.ReadOnly "old"
+        |> Editable.update "new"  --> ReadOnly "old"
 
-    Editable.Editable "Hello" "Hello"
-        |> Editable.update "World"    --> Editable "Hello" "World"
+    Editable.Editable "old" "old"
+        |> Editable.update "new"  --> Editable "old" "new"
 
 -}
 update : a -> Editable a -> Editable a
@@ -84,13 +84,13 @@ update value =
 
 {-| Save a modified value. This puts the modified value into the context of `ReadOnly`.
 
-    Editable.Editable "Hello" "World"
-        |> Editable.save --> ReadOnly "World"
+    Editable.Editable "old" "new"
+        |> Editable.save          --> ReadOnly "new"
 
-    Editable.ReadOnly "Hello"
-        |> Editable.edit           --> Editable "Hello" "Hello"
-        |> Editable.update "World" --> Editable "Hello" "World"
-        |> Editable.save           --> ReadOnly "World"
+    Editable.ReadOnly "old"
+        |> Editable.edit          --> Editable "old" "old"
+        |> Editable.update "new"  --> Editable "old" "new"
+        |> Editable.save          --> ReadOnly "new"
 
 -}
 save : Editable a -> Editable a
@@ -105,8 +105,8 @@ save x =
 
 {-| Cancels a modified value. This puts the old value into the context of `ReadOnly`.
 
-    Editable.Editable "Hello" "World"
-        |> Editable.cancel       --> ReadOnly "Hello"
+    Editable.Editable "old" "new"
+        |> Editable.cancel       --> ReadOnly "old"
 
 -}
 cancel : Editable a -> Editable a
