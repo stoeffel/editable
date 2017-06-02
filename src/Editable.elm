@@ -1,18 +1,23 @@
 module Editable
     exposing
-        ( Editable(Editable, ReadOnly)
+        ( Editable(..)
+        , Editing
+        , Reading
         , cancel
         , edit
         , map
+        , readOnly
+        , readValue
         , save
         , update
         , value
         )
 
 {-| Editable represents a value that can be read-only or editable.
-`ReadOnly a` holds the locked value and `Editable a a`  holds both the old and the newly modified value.
+`ReadOnly a` holds the locked value and `Editable a a` holds both the old and the newly modified value.
 
-@docs Editable, cancel, edit, map, save, update, value
+@docs Editable, Editing, Reading, cancel, edit, map, readOnly, save, update, value, readValue
+
 -}
 
 
@@ -23,116 +28,155 @@ module Editable
         case editable of
             Editable saved modified ->
                 input [ defaultValue modified ] []
+
             ReadOnly saved ->
                 text saved
 
 -}
-type Editable a
-    = Editable a a
-    | ReadOnly a
+type Editable a editing reading
+    = Editable a a editing
+    | ReadOnly a reading
 
 
-{-| Makes a `ReadOnly` value `Editable`.
+{-| A value that is currently edited.
+-}
+type alias Editing a =
+    Editable a IsEditable Never
 
-    Editable.ReadOnly "old"
-        |> Editable.update "new" --> ReadOnly "old"
+
+{-| A value that is currently not edited.
+-}
+type alias Reading a =
+    Editable a Never NotEditable
+
+
+type NotEditable
+    = NotEditable
+
+
+type IsEditable
+    = IsEditable
+
+
+{-| Makes a `Reading` value `Editing`.
+
+    Editable.readOnly "old"
         |> Editable.edit         --> Editable "old" "old"
         |> Editable.update "new" --> Editable "old" "new"
 
 -}
-edit : Editable a -> Editable a
+edit : Reading a -> Editing a
 edit x =
-    case x of
-        Editable _ _ ->
-            x
+    let
+        xValue =
+            value x
+    in
+    Editable xValue xValue IsEditable
 
-        ReadOnly value ->
-            Editable value value
 
-
-{-| Apply a function to an `Editable`.
-
-    Editable.ReadOnly "old"
-        |> Editable.map String.toUpper --> ReadOnly "old"
+{-| Apply a function to an `Editing`.
 
     Editable.Editable "old" "old"
-        |> Editable.map String.toUpper --> Editable "old" "OLD"
+        |> Editable.map String.toUpper --> Editable "old" "OLD" IsEditable
 
 -}
-map : (a -> a) -> Editable a -> Editable a
-map f x =
-    case x of
-        Editable saved modified ->
-            Editable saved (f modified)
+map : (a -> a) -> Editing a -> Editing a
+map =
+    map_
 
-        ReadOnly saved ->
-            ReadOnly saved
+
+map_ : (a -> a) -> Editable a editing reading -> Editable a editing reading
+map_ f x =
+    case x of
+        Editable saved modified a ->
+            Editable saved (f modified) a
+
+        ReadOnly saved a ->
+            ReadOnly saved a
 
 
 {-| Updates an `Editable` and doesn't change a `ReadOnly`.
 
-    Editable.ReadOnly "old"
-        |> Editable.update "new"  --> ReadOnly "old"
-
-    Editable.Editable "old" "old"
+    Editable.readOnly "old"
+        |> Editable.edit
         |> Editable.update "new"  --> Editable "old" "new"
 
 -}
-update : a -> Editable a -> Editable a
+update : a -> Editing a -> Editing a
 update value =
     map (always value)
 
 
 {-| Save a modified value. This puts the modified value into the context of `ReadOnly`.
 
-    Editable.Editable "old" "new"
-        |> Editable.save          --> ReadOnly "new"
-
-    Editable.ReadOnly "old"
+    Editable.readOnly "old"
         |> Editable.edit          --> Editable "old" "old"
         |> Editable.update "new"  --> Editable "old" "new"
         |> Editable.save          --> ReadOnly "new"
 
 -}
-save : Editable a -> Editable a
-save x =
-    case x of
-        Editable _ modified ->
-            ReadOnly modified
-
-        ReadOnly _ ->
-            x
+save : Editing a -> Reading a
+save =
+    readOnly << value
 
 
 {-| Cancels a modified value. This puts the old value into the context of `ReadOnly`.
 
-    Editable.Editable "old" "new"
-        |> Editable.cancel       --> ReadOnly "old"
+    Editable.readOnly "old"
+        |> Editable.edit          --> Editable "old" "old"
+        |> Editable.update "new"  --> Editable "old" "new"
+        |> Editable.cancel        --> ReadOnly "old"
 
 -}
-cancel : Editable a -> Editable a
-cancel x =
-    case x of
-        Editable value _ ->
-            ReadOnly value
-
-        ReadOnly _ ->
-            x
+cancel : Editing a -> Reading a
+cancel =
+    readOnly << readValue
 
 
 {-| Returns the current value of an Editable.
 
-    Editable.ReadOnly "old"
+    Editable.readOnly "old"
         |> Editable.value  --> "old"
 
-    Editable.Editable "old" "new
-        |> Editable.value  --> "new"
+    Editable.readOnly "old"
+        |> Editable.edit          --> Editable "old" "old"
+        |> Editable.update "new"  --> Editable "old" "new"
+        |> Editable.value         --> "new"
+
 -}
-value : Editable a -> a
+value : Editable a editing reading -> a
 value x =
     case x of
-        Editable _ value ->
+        Editable _ value _ ->
             value
 
-        ReadOnly value ->
+        ReadOnly value _ ->
             value
+
+
+{-| Returns the current value of an Editable.
+
+    Editable.readOnly "old"
+        |> Editable.readValue  --> "old"
+
+    Editable.readOnly "old"
+        |> Editable.edit          --> Editable "old" "old"
+        |> Editable.update "new"  --> Editable "old" "new"
+        |> Editable.readValue     --> "old"
+
+-}
+readValue : Editable a editing reading -> a
+readValue x =
+    case x of
+        Editable value _ _ ->
+            value
+
+        ReadOnly value _ ->
+            value
+
+
+{-| Creates a Editable as a ReadOnly.
+-}
+readOnly : a -> Reading a
+readOnly x =
+    ReadOnly x NotEditable
