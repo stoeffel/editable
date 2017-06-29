@@ -1,182 +1,123 @@
 module Editable
     exposing
-        ( Editable(..)
-        , Editing
-        , Reading
-        , cancel
+        ( Editable
+        , Locked(..)
+        , Unlocked(..)
         , edit
-        , map
+        , fold
+        , modifiedValue
         , readOnly
         , readValue
-        , save
-        , update
-        , value
         )
 
 {-| Editable represents a value that can be read-only or editable.
 `ReadOnly a` holds the locked value and `Editable a a` holds both the old and the newly modified value.
 
-@docs Editable, Editing, Reading, cancel, edit, map, readOnly, save, update, value, readValue
+@docs Editable, readOnly, edit, modifiedValue
 
 -}
+
+import Equality exposing (Equal)
 
 
 {-| An `Editable` value is either `ReadOnly` or `Editable`.
-
-    view : Editable String -> Html msg
-    view editable =
-        case editable of
-            Editable saved modified ->
-                input [ defaultValue modified ] []
-
-            ReadOnly saved ->
-                text saved
-
 -}
-type Editable a editing reading
-    = Editable a a editing
-    | ReadOnly a reading
+type Editable locked unlocked ty
+    = Editable (Equal unlocked Unlocked) ty ty
+    | ReadOnly (Equal locked Locked) ty
 
 
-{-| A value that is currently edited.
+{-| Marks an Editable as locked.
 -}
-type alias Editing a =
-    Editable a IsEditable Never
+type Locked
+    = Locked
 
 
-{-| A value that is currently not edited.
+{-| Marks an Editable as unlocked.
 -}
-type alias Reading a =
-    Editable a Never NotEditable
+type Unlocked
+    = Unlocked
 
 
-type NotEditable
-    = NotEditable
-
-
-type IsEditable
-    = IsEditable
-
-
-{-| Makes a `Reading` value `Editing`.
-
-    Editable.readOnly "old"
-        |> Editable.edit         --> Editable "old" "old"
-        |> Editable.update "new" --> Editable "old" "new"
-
+{-| Create a readonly value.
 -}
-edit : Reading a -> Editing a
-edit x =
+readOnly : ty -> Editable Locked never ty
+readOnly value =
+    ReadOnly Equality.refl value
+
+
+{-| Make a readonly value editable.
+-}
+edit : Editable Locked never ty -> Editable never Unlocked ty
+edit wrapped =
     let
-        xValue =
-            value x
+        edit_ : ty -> Editable never Unlocked ty
+        edit_ value =
+            Editable Equality.refl value value
     in
-    Editable xValue xValue IsEditable
+    case wrapped of
+        Editable _ _ _ ->
+            Debug.crash "This can't ever happen!"
+
+        ReadOnly _ value ->
+            edit_ value
 
 
-{-| Apply a function to an `Editing`.
-
-    Editable.Editable "old" "old"
-        |> Editable.map String.toUpper --> Editable "old" "OLD" IsEditable
-
--}
-map : (a -> a) -> Editing a -> Editing a
-map =
-    map_
-
-
-map_ : (a -> a) -> Editable a editing reading -> Editable a editing reading
-map_ f x =
-    case x of
-        Editable saved modified a ->
-            Editable saved (f modified) a
-
-        ReadOnly saved a ->
-            ReadOnly saved a
-
-
-{-| Updates an `Editable` and doesn't change a `ReadOnly`.
+{-| Get the value of a editable value.
 
     Editable.readOnly "old"
         |> Editable.edit
-        |> Editable.update "new"  --> Editable "old" "new"
-
--}
-update : a -> Editing a -> Editing a
-update value =
-    map (always value)
-
-
-{-| Save a modified value. This puts the modified value into the context of `ReadOnly`.
+        |> Editable.modifiedValue
+    --> "old"
 
     Editable.readOnly "old"
-        |> Editable.edit          --> Editable "old" "old"
-        |> Editable.update "new"  --> Editable "old" "new"
-        |> Editable.save          --> ReadOnly "new"
+        |> Editable.modifiedValue
+    -- 💥 This won't compile!
 
 -}
-save : Editing a -> Reading a
-save =
-    readOnly << value
-
-
-{-| Cancels a modified value. This puts the old value into the context of `ReadOnly`.
-
-    Editable.readOnly "old"
-        |> Editable.edit          --> Editable "old" "old"
-        |> Editable.update "new"  --> Editable "old" "new"
-        |> Editable.cancel        --> ReadOnly "old"
-
--}
-cancel : Editing a -> Reading a
-cancel =
-    readOnly << readValue
-
-
-{-| Returns the current value of an Editable.
-
-    Editable.readOnly "old"
-        |> Editable.value  --> "old"
-
-    Editable.readOnly "old"
-        |> Editable.edit          --> Editable "old" "old"
-        |> Editable.update "new"  --> Editable "old" "new"
-        |> Editable.value         --> "new"
-
--}
-value : Editable a editing reading -> a
-value x =
-    case x of
-        Editable _ value _ ->
+modifiedValue : Editable never Unlocked ty -> ty
+modifiedValue wrapped =
+    case wrapped of
+        Editable _ _ value ->
             value
 
-        ReadOnly value _ ->
+        ReadOnly _ _ ->
+            Debug.crash "This can't ever happen!"
+
+
+{-| Get the value of a readonly value.
+
+    Editable.readOnly "old"
+        |> Editable.readValue
+    --> "old"
+
+    Editable.readOnly "old"
+        |> Editable.edit
+        |> Editable.readValue
+    -- 💥 This won't compile!
+
+-}
+readValue : Editable Locked never ty -> ty
+readValue wrapped =
+    case wrapped of
+        Editable _ _ _ ->
+            Debug.crash "This can't ever happen!"
+
+        ReadOnly _ value ->
             value
 
 
-{-| Returns the current value of an Editable.
-
-    Editable.readOnly "old"
-        |> Editable.readValue  --> "old"
-
-    Editable.readOnly "old"
-        |> Editable.edit          --> Editable "old" "old"
-        |> Editable.update "new"  --> Editable "old" "new"
-        |> Editable.readValue     --> "old"
-
+{-| Fold an editable.
 -}
-readValue : Editable a editing reading -> a
-readValue x =
-    case x of
-        Editable value _ _ ->
-            value
+fold :
+    (Editable Locked never ty -> a)
+    -> (Editable never Unlocked ty -> a)
+    -> Editable locked unlocked ty
+    -> a
+fold fromLocked fromUnlocked wrapped =
+    case wrapped of
+        Editable proof old new ->
+            fromUnlocked (Editable Equality.refl old new)
 
-        ReadOnly value _ ->
-            value
-
-
-{-| Creates a Editable as a ReadOnly.
--}
-readOnly : a -> Reading a
-readOnly x =
-    ReadOnly x NotEditable
+        ReadOnly proof value ->
+            fromLocked (ReadOnly Equality.refl value)
