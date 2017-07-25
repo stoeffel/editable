@@ -158,7 +158,7 @@ If the `Editable` is `ReadOnly` then we return False.
 -}
 isDirty : Editable a -> Bool
 isDirty x =
-    isDirtyWith (==) x
+    isDirtyWith (/=) x
 
 
 {-| Determines if a modified value has changed from the saved one, by a provided function.
@@ -166,13 +166,13 @@ isDirty x =
 If the `Editable` is `ReadOnly` then we return False.
 
     Editable.Editable 1 2
-        |> Editable.isDirtyWith (==)  --> False
+        |> Editable.isDirtyWith (/=)  --> False
 
     Editable.Editable "old" "new"
-        |> Editable.isDirtyWith (==)  --> True
+        |> Editable.isDirtyWith (/=)  --> True
 
     Editable.ReadOnly "old"
-        |> Editable.isDirtyWith (==)  --> False
+        |> Editable.isDirtyWith (/=)  --> False
 
 -}
 isDirtyWith : (a -> a -> Bool) -> Editable a -> Bool
