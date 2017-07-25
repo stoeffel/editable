@@ -123,14 +123,14 @@ all =
             [ fuzz2 string string "determines if a modified value is different from the saved one." <|
                 \a b ->
                     Editable a b
-                        |> Editable.isDirtyWith (==)
+                        |> Editable.isDirtyWith (/=)
                         |> Expect.equal (a /= b)
             , fuzz2 string string "return False if `Editable` is `ReadOnly`." <|
                 \a b ->
                     Editable a b
                         |> Editable.edit
                         |> Editable.save
-                        |> Editable.isDirtyWith (==)
+                        |> Editable.isDirtyWith (/=)
                         |> Expect.equal False
             ]
         ]
