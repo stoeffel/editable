@@ -105,4 +105,18 @@ all =
                         |> Editable.value
                         |> Expect.equal a
             ]
+        , describe "#isDirty"
+            [ fuzz2 string string "determines if a modified value is different from the saved one." <|
+                \a b ->
+                    Editable a b
+                        |> Editable.isDirty
+                        |> Expect.equal (a == b)
+            , fuzz2 string string "return False if a `Editable` is `ReadOnly`." <|
+                \a b ->
+                    Editable a b
+                        |> Editable.edit
+                        |> Editable.save
+                        |> Editable.isDirty
+                        |> Expect.equal False
+            ]
         ]

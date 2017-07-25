@@ -7,12 +7,15 @@ module Editable
         , save
         , update
         , value
+        , isDirty
+        , isDirtyWith
         )
 
 {-| Editable represents a value that can be read-only or editable.
-`ReadOnly a` holds the locked value and `Editable a a`  holds both the old and the newly modified value.
+`ReadOnly a` holds the locked value and `Editable a a` holds both the old and the newly modified value.
 
-@docs Editable, cancel, edit, map, save, update, value
+@docs Editable, cancel, edit, map, save, update, value, isDirty, isDirtyWith
+
 -}
 
 
@@ -23,6 +26,7 @@ module Editable
         case editable of
             Editable saved modified ->
                 input [ defaultValue modified ] []
+
             ReadOnly saved ->
                 text saved
 
@@ -127,6 +131,7 @@ cancel x =
 
     Editable.Editable "old" "new
         |> Editable.value  --> "new"
+
 -}
 value : Editable a -> a
 value x =
@@ -136,3 +141,40 @@ value x =
 
         ReadOnly value ->
             value
+
+
+{-| Determines if a modified value has changed from the saved one, by checking equality of both values.
+
+If the `Editable` is `ReadOnly` then we return False.
+
+    Editable.Editable "old" "old"
+        |> Editable.isDirty  --> False
+
+    Editable.Editable "old" "new"
+        |> Editable.isDirty  --> True
+
+-}
+isDirty : Editable a -> Bool
+isDirty x =
+    isDirtyWith (==) x
+
+
+{-| Determines if a modified value has changed from the saved one, by a provided function.
+
+If the `Editable` is `ReadOnly` then we return False.
+
+    Editable.Editable 1 2
+        |> Editable.isDirtyWith (==)  --> False
+
+    Editable.Editable "old" "new"
+        |> Editable.isDirtyWith (==)  --> True
+
+-}
+isDirtyWith : (a -> a -> Bool) -> Editable a -> Bool
+isDirtyWith f x =
+    case x of
+        ReadOnly _ ->
+            False
+
+        Editable saved modified ->
+            f saved modified
