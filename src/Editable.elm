@@ -39,8 +39,7 @@ type Editable a
 {-| Makes a `ReadOnly` value `Editable`.
 
     Editable.ReadOnly "old"
-        |> Editable.update "new" --> ReadOnly "old"
-        |> Editable.edit         --> Editable "old" "old"
+        |> Editable.edit
         |> Editable.update "new" --> Editable "old" "new"
 
 -}
@@ -93,8 +92,8 @@ update value =
         |> Editable.save          --> ReadOnly "new"
 
     Editable.ReadOnly "old"
-        |> Editable.edit          --> Editable "old" "old"
-        |> Editable.update "new"  --> Editable "old" "new"
+        |> Editable.edit
+        |> Editable.update "new"
         |> Editable.save          --> ReadOnly "new"
 
 -}
@@ -129,7 +128,7 @@ cancel x =
     Editable.ReadOnly "old"
         |> Editable.value  --> "old"
 
-    Editable.Editable "old" "new
+    Editable.Editable "old" "new"
         |> Editable.value  --> "new"
 
 -}
