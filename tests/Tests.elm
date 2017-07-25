@@ -1,9 +1,9 @@
 module Tests exposing (..)
 
-import Test exposing (..)
-import Fuzz exposing (..)
-import Expect
 import Editable exposing (Editable(..))
+import Expect
+import Fuzz exposing (..)
+import Test exposing (..)
 
 
 all : Test

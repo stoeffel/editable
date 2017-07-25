@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/stoeffel/editable.svg?branch=master)](https://travis-ci.org/stoeffel/editable)
+
 Editable
 ========
 
@@ -7,3 +9,9 @@ Editable
 ## Installation
 
 `elm-package install stoeffel/editable`
+
+## Tests
+
+Install packages: `npm install -g elm-test elm-verify-examples`
+
+Execute tests: `./execute-tests`
