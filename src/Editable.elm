@@ -3,12 +3,12 @@ module Editable
         ( Editable(Editable, ReadOnly)
         , cancel
         , edit
+        , isDirty
+        , isDirtyWith
         , map
         , save
         , update
         , value
-        , isDirty
-        , isDirtyWith
         )
 
 {-| Editable represents a value that can be read-only or editable.
