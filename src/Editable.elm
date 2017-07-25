@@ -152,6 +152,9 @@ If the `Editable` is `ReadOnly` then we return False.
     Editable.Editable "old" "new"
         |> Editable.isDirty  --> True
 
+    Editable.ReadOnly "old"
+        |> Editable.isDirty  --> False
+
 -}
 isDirty : Editable a -> Bool
 isDirty x =
@@ -167,6 +170,9 @@ If the `Editable` is `ReadOnly` then we return False.
 
     Editable.Editable "old" "new"
         |> Editable.isDirtyWith (==)  --> True
+
+    Editable.ReadOnly "old"
+        |> Editable.isDirtyWith (==)  --> False
 
 -}
 isDirtyWith : (a -> a -> Bool) -> Editable a -> Bool
