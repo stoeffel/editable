@@ -7,3 +7,9 @@ Editable
 ## Installation
 
 `elm-package install stoeffel/editable`
+
+## Tests
+
+Install packages: `npm install -g elm-test elm-verify-examples`
+
+Execute tests: `./execute-tests`
