@@ -16,7 +16,7 @@ module Editable
 {-| Editable represents a value that can be read-only or editable.
 `ReadOnly a` holds the locked value and `Editable a a` holds both the old and the newly modified value.
 
-@docs Editable, cancel, edit, map, save, update, value, isDirty, isDirtyWith
+@docs Editable, cancel, edit, isDirty, isDirtyWith, isEditable, isReadOnly, map, save, update, value,
 
 -}
 
@@ -147,10 +147,10 @@ value x =
 {-| Indicates if an `Editable` is in `Editable` state.
 
     Editable.Editable "old" "old"
-        |> Editable.isReadOnly  --> True
+        |> Editable.isEditable  --> True
 
     Editable.ReadOnly "old"
-        |> Editable.isReadOnly  --> False
+        |> Editable.isEditable  --> False
 
 -}
 isEditable : Editable a -> Bool
