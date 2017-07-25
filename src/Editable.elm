@@ -165,7 +165,7 @@ isDirty x =
 
 If the `Editable` is `ReadOnly` then we return False.
 
-    Editable.Editable 1 2
+    Editable.Editable "old" "old"
         |> Editable.isDirtyWith (/=)  --> False
 
     Editable.Editable "old" "new"
