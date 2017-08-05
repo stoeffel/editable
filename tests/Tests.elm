@@ -106,7 +106,7 @@ all =
                         |> Expect.equal a
             ]
         , describe "#isDirty"
-            [ fuzz2 string string "determines if a modified value is different from the saved one." <|
+            [ fuzz2 string string "indicates if a modified value is different from the saved one." <|
                 \a b ->
                     Editable a b
                         |> Editable.isDirty
@@ -120,7 +120,7 @@ all =
                         |> Expect.equal False
             ]
         , describe "#isDirtyWith"
-            [ fuzz2 string string "determines if a modified value is different from the saved one." <|
+            [ fuzz2 string string "indicates if a modified value is different from the saved one." <|
                 \a b ->
                     Editable a b
                         |> Editable.isDirtyWith (/=)
@@ -132,5 +132,29 @@ all =
                         |> Editable.save
                         |> Editable.isDirtyWith (/=)
                         |> Expect.equal False
+            ]
+        , describe "#isEditable"
+            [ fuzz2 string string "returns True if an `Editable` is in `Editable` state." <|
+                \a b ->
+                    Editable a b
+                        |> Editable.isEditable
+                        |> Expect.equal True
+            , fuzz string "returns False if an `Editable` is in `ReadOnly` state." <|
+                \x ->
+                    ReadOnly x
+                        |> Editable.isEditable
+                        |> Expect.equal False
+            ]
+        , describe "#isReadOnly"
+            [ fuzz2 string string "returns False if an `Editable` is in `Editable` state." <|
+                \a b ->
+                    Editable a b
+                        |> Editable.isReadOnly
+                        |> Expect.equal False
+            , fuzz string "returns True if an `Editable` is in `ReadOnly` state." <|
+                \x ->
+                    ReadOnly x
+                        |> Editable.isReadOnly
+                        |> Expect.equal True
             ]
         ]

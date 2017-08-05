@@ -5,6 +5,8 @@ module Editable
         , edit
         , isDirty
         , isDirtyWith
+        , isEditable
+        , isReadOnly
         , map
         , save
         , update
@@ -14,7 +16,7 @@ module Editable
 {-| Editable represents a value that can be read-only or editable.
 `ReadOnly a` holds the locked value and `Editable a a` holds both the old and the newly modified value.
 
-@docs Editable, cancel, edit, map, save, update, value, isDirty, isDirtyWith
+@docs Editable, cancel, edit, isDirty, isDirtyWith, isEditable, isReadOnly, map, save, update, value
 
 -}
 
@@ -142,7 +144,45 @@ value x =
             value
 
 
-{-| Determines if a modified value has changed from the saved one, by checking equality of both values.
+{-| Indicates if an `Editable` is in `Editable` state.
+
+    Editable.Editable "old" "old"
+        |> Editable.isEditable  --> True
+
+    Editable.ReadOnly "old"
+        |> Editable.isEditable  --> False
+
+-}
+isEditable : Editable a -> Bool
+isEditable x =
+    case x of
+        Editable _ _ ->
+            True
+
+        _ ->
+            False
+
+
+{-| Indicates if an `Editable` is in `ReadOnly` state.
+
+    Editable.Editable "old" "old"
+        |> Editable.isReadOnly  --> False
+
+    Editable.ReadOnly "old"
+        |> Editable.isReadOnly  --> True
+
+-}
+isReadOnly : Editable a -> Bool
+isReadOnly x =
+    case x of
+        ReadOnly _ ->
+            True
+
+        _ ->
+            False
+
+
+{-| Indicates if a modified value has changed from the saved one, by checking equality of both values.
 
 If the `Editable` is `ReadOnly` then we return False.
 
@@ -161,7 +201,7 @@ isDirty x =
     isDirtyWith (/=) x
 
 
-{-| Determines if a modified value has changed from the saved one, by a provided function.
+{-| Indicates if a modified value has changed from the saved one, by a provided function.
 
 If the `Editable` is `ReadOnly` then we return False.
 
