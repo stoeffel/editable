@@ -67,12 +67,12 @@ all =
             [ fuzz2 string string "update doesn't set the value if it's ReadOnly" <|
                 \a b ->
                     ReadOnly a
-                        |> Editable.update b
+                        |> Editable.update (always b)
                         |> Expect.equal (ReadOnly a)
             , fuzz2 string string "update sets the value if it's Editable" <|
                 \a b ->
                     Editable a a
-                        |> Editable.update b
+                        |> Editable.update (always b)
                         |> Expect.equal (Editable a b)
             ]
         , describe "#save"
@@ -80,7 +80,7 @@ all =
                 \a b ->
                     ReadOnly a
                         |> Editable.edit
-                        |> Editable.update b
+                        |> Editable.update (always b)
                         |> Editable.save
                         |> Expect.equal (ReadOnly b)
             ]
@@ -89,7 +89,7 @@ all =
                 \a b ->
                     ReadOnly a
                         |> Editable.edit
-                        |> Editable.update b
+                        |> Editable.update (always b)
                         |> Editable.cancel
                         |> Expect.equal (ReadOnly a)
             ]

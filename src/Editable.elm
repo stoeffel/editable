@@ -42,7 +42,7 @@ type Editable a
 
     Editable.ReadOnly "old"
         |> Editable.edit
-        |> Editable.update "new" --> Editable "old" "new"
+        |> Editable.update (always "new") --> Editable "old" "new"
 
 -}
 edit : Editable a -> Editable a
@@ -77,15 +77,18 @@ map f x =
 {-| Updates an `Editable` and doesn't change a `ReadOnly`.
 
     Editable.ReadOnly "old"
-        |> Editable.update "new"  --> ReadOnly "old"
+        |> Editable.update (always "new")  --> ReadOnly "old"
 
     Editable.Editable "old" "old"
-        |> Editable.update "new"  --> Editable "old" "new"
+        |> Editable.update (always "new")  --> Editable "old" "new"
+
+    Editable.Editable "old" "new"
+        |> Editable.update (\val -> val ++ "er")  --> Editable "old" "newer"
 
 -}
-update : a -> Editable a -> Editable a
-update value =
-    map (always value)
+update : (a -> a) -> Editable a -> Editable a
+update f =
+    map f
 
 
 {-| Save a modified value. This puts the modified value into the context of `ReadOnly`.
@@ -95,7 +98,7 @@ update value =
 
     Editable.ReadOnly "old"
         |> Editable.edit
-        |> Editable.update "new"
+        |> Editable.update (always "new")
         |> Editable.save          --> ReadOnly "new"
 
 -}
