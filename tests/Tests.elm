@@ -63,24 +63,12 @@ all =
                                 |> Editable.map ((++) "?")
                             )
             ]
-        , describe "#update"
-            [ fuzz2 string string "update doesn't set the value if it's ReadOnly" <|
-                \a b ->
-                    ReadOnly a
-                        |> Editable.update (always b)
-                        |> Expect.equal (ReadOnly a)
-            , fuzz2 string string "update sets the value if it's Editable" <|
-                \a b ->
-                    Editable a a
-                        |> Editable.update (always b)
-                        |> Expect.equal (Editable a b)
-            ]
         , describe "#save"
             [ fuzz2 string string "save makes a Editable ReadOnly with the modified value." <|
                 \a b ->
                     ReadOnly a
                         |> Editable.edit
-                        |> Editable.update (always b)
+                        |> Editable.map (always b)
                         |> Editable.save
                         |> Expect.equal (ReadOnly b)
             ]
@@ -89,7 +77,7 @@ all =
                 \a b ->
                     ReadOnly a
                         |> Editable.edit
-                        |> Editable.update (always b)
+                        |> Editable.map (always b)
                         |> Editable.cancel
                         |> Expect.equal (ReadOnly a)
             ]
