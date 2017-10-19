@@ -66,7 +66,7 @@ order to update the value of an `Editable.Editable`.
     Editable.Editable "old" "new"
         |> Editable.map (\val -> val ++ "er")  --> Editable "old" "newer"
 
-    Editable.Editable "old" "new"
+    Editable.Editable "old" "old"
         |> Editable.map (always "new") --> Editable "old" "new"
 
 -}
