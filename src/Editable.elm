@@ -9,14 +9,13 @@ module Editable
         , isReadOnly
         , map
         , save
-        , update
         , value
         )
 
 {-| Editable represents a value that can be read-only or editable.
 `ReadOnly a` holds the locked value and `Editable a a` holds both the old and the newly modified value.
 
-@docs Editable, cancel, edit, isDirty, isDirtyWith, isEditable, isReadOnly, map, save, update, value
+@docs Editable, cancel, edit, isDirty, isDirtyWith, isEditable, isReadOnly, map, save, value
 
 -}
 
@@ -42,7 +41,7 @@ type Editable a
 
     Editable.ReadOnly "old"
         |> Editable.edit
-        |> Editable.update "new" --> Editable "old" "new"
+        |> Editable.map (always "new") --> Editable "old" "new"
 
 -}
 edit : Editable a -> Editable a
@@ -55,13 +54,20 @@ edit x =
             Editable value value
 
 
-{-| Apply a function to an `Editable`.
+{-| Apply a function to an `Editable`. This is the function you will call in
+order to update the value of an `Editable.Editable`.
 
     Editable.ReadOnly "old"
         |> Editable.map String.toUpper --> ReadOnly "old"
 
     Editable.Editable "old" "old"
         |> Editable.map String.toUpper --> Editable "old" "OLD"
+
+    Editable.Editable "old" "new"
+        |> Editable.map (\val -> val ++ "er")  --> Editable "old" "newer"
+
+    Editable.Editable "old" "old"
+        |> Editable.map (always "new") --> Editable "old" "new"
 
 -}
 map : (a -> a) -> Editable a -> Editable a
@@ -74,20 +80,6 @@ map f x =
             ReadOnly saved
 
 
-{-| Updates an `Editable` and doesn't change a `ReadOnly`.
-
-    Editable.ReadOnly "old"
-        |> Editable.update "new"  --> ReadOnly "old"
-
-    Editable.Editable "old" "old"
-        |> Editable.update "new"  --> Editable "old" "new"
-
--}
-update : a -> Editable a -> Editable a
-update value =
-    map (always value)
-
-
 {-| Save a modified value. This puts the modified value into the context of `ReadOnly`.
 
     Editable.Editable "old" "new"
@@ -95,7 +87,7 @@ update value =
 
     Editable.ReadOnly "old"
         |> Editable.edit
-        |> Editable.update "new"
+        |> Editable.map (always "new")
         |> Editable.save          --> ReadOnly "new"
 
 -}
