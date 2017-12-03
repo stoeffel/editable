@@ -1,6 +1,7 @@
 module Saved
     exposing
-        ( Saved
+        ( Eq
+        , Saved
         , change
         , discard
         , map
@@ -22,6 +23,7 @@ The type takes an equality function to distinguish between the Changed and Saved
 states.
 
 @docs Saved
+@docs Eq
 @docs change
 @docs discard
 @docs map
@@ -41,6 +43,13 @@ type Saved a
     | Changed (Eq a) a a
 
 
+{-| An equality check for a type.
+
+In a lot of cases you can simply pass in (==), but if the type in your `Saved`
+is / contains types that implement their own equality checks, such as `Dict` or
+`Set`, you will need to use those.
+
+-}
 type alias Eq a =
     a -> a -> Bool
 

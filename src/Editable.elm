@@ -1,13 +1,14 @@
 module Editable
     exposing
-        ( Editable(Editable, ReadOnly)
+        ( Editable
         , cancel
         , edit
+        , editable
         , isDirty
-        , isDirtyWith
         , isEditable
         , isReadOnly
         , map
+        , readonly
         , save
         , value
         )
@@ -15,9 +16,12 @@ module Editable
 {-| Editable represents a value that can be read-only or editable.
 `ReadOnly a` holds the locked value and `Editable a a` holds both the old and the newly modified value.
 
-@docs Editable, cancel, edit, isDirty, isDirtyWith, isEditable, isReadOnly, map, save, value
+@docs Editable, editable, readonly, cancel, edit, isDirty, isEditable, isReadOnly, map, save, value
 
 -}
+
+import Lockable exposing (Lockable)
+import Saved exposing (Eq, Saved)
 
 
 {-| An `Editable` value is either `ReadOnly` or `Editable`.
@@ -32,9 +36,8 @@ module Editable
                 text saved
 
 -}
-type Editable a
-    = Editable a a
-    | ReadOnly a
+type alias Editable a =
+    Lockable (Saved a)
 
 
 {-| Makes a `ReadOnly` value `Editable`.
@@ -45,13 +48,8 @@ type Editable a
 
 -}
 edit : Editable a -> Editable a
-edit x =
-    case x of
-        Editable _ _ ->
-            x
-
-        ReadOnly value ->
-            Editable value value
+edit =
+    Lockable.unlock
 
 
 {-| Apply a function to an `Editable`. This is the function you will call in
@@ -72,12 +70,7 @@ order to update the value of an `Editable.Editable`.
 -}
 map : (a -> a) -> Editable a -> Editable a
 map f x =
-    case x of
-        Editable saved modified ->
-            Editable saved (f modified)
-
-        ReadOnly saved ->
-            ReadOnly saved
+    Lockable.change (Saved.change f) x
 
 
 {-| Save a modified value. This puts the modified value into the context of `ReadOnly`.
@@ -93,12 +86,8 @@ map f x =
 -}
 save : Editable a -> Editable a
 save x =
-    case x of
-        Editable _ modified ->
-            ReadOnly modified
-
-        ReadOnly _ ->
-            x
+    Lockable.map Saved.save x
+        |> Lockable.lock
 
 
 {-| Cancels a modified value. This puts the old value into the context of `ReadOnly`.
@@ -109,12 +98,8 @@ save x =
 -}
 cancel : Editable a -> Editable a
 cancel x =
-    case x of
-        Editable value _ ->
-            ReadOnly value
-
-        ReadOnly _ ->
-            x
+    Lockable.map Saved.discard x
+        |> Lockable.lock
 
 
 {-| Returns the current value of an Editable.
@@ -127,13 +112,8 @@ cancel x =
 
 -}
 value : Editable a -> a
-value x =
-    case x of
-        Editable _ value ->
-            value
-
-        ReadOnly value ->
-            value
+value =
+    Lockable.value >> Saved.value
 
 
 {-| Indicates if an `Editable` is in `Editable` state.
@@ -146,13 +126,8 @@ value x =
 
 -}
 isEditable : Editable a -> Bool
-isEditable x =
-    case x of
-        Editable _ _ ->
-            True
-
-        _ ->
-            False
+isEditable =
+    not << Lockable.locked
 
 
 {-| Indicates if an `Editable` is in `ReadOnly` state.
@@ -165,13 +140,8 @@ isEditable x =
 
 -}
 isReadOnly : Editable a -> Bool
-isReadOnly x =
-    case x of
-        ReadOnly _ ->
-            True
-
-        _ ->
-            False
+isReadOnly =
+    Lockable.locked
 
 
 {-| Indicates if a modified value has changed from the saved one, by checking equality of both values.
@@ -189,29 +159,21 @@ If the `Editable` is `ReadOnly` then we return False.
 
 -}
 isDirty : Editable a -> Bool
-isDirty x =
-    isDirtyWith (/=) x
+isDirty =
+    not << Saved.saved << Lockable.value
 
 
-{-| Indicates if a modified value has changed from the saved one, by a provided function.
-
-If the `Editable` is `ReadOnly` then we return False.
-
-    Editable.Editable "old" "old"
-        |> Editable.isDirtyWith (/=)  --> False
-
-    Editable.Editable "old" "new"
-        |> Editable.isDirtyWith (/=)  --> True
-
-    Editable.ReadOnly "old"
-        |> Editable.isDirtyWith (/=)  --> False
-
+{-| Create a new `Editable` value that starts out in a `ReadOnly` state.
 -}
-isDirtyWith : (a -> a -> Bool) -> Editable a -> Bool
-isDirtyWith f x =
-    case x of
-        ReadOnly _ ->
-            False
+readonly : Eq a -> a -> Editable a
+readonly eq x =
+    Saved.new eq x
+        |> Lockable.new
 
-        Editable saved modified ->
-            f saved modified
+
+{-| Create a new `Editable` value that starts out in an `Editable` state.
+-}
+editable : Eq a -> a -> Editable a
+editable eq x =
+    readonly eq x
+        |> edit
