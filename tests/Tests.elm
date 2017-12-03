@@ -1,6 +1,6 @@
 module Tests exposing (..)
 
-import Editable exposing (Editable(..))
+import Editable exposing (Editable, editable, readonly)
 import Expect
 import Fuzz exposing (..)
 import Test exposing (..)
@@ -10,138 +10,145 @@ all : Test
 all =
     describe "Editable"
         [ describe "#edit"
-            [ fuzz string "changes a ReadOnly value into an Editable value" <|
+            [ fuzz string "changes a read only value into an editable value" <|
                 \value ->
-                    ReadOnly value
+                    readonly (==) value
                         |> Editable.edit
-                        |> Expect.equal (Editable value value)
-            , fuzz string "nothing changes if it's already a Editable value" <|
+                        |> Editable.isEditable
+                        |> Expect.equal True
+            , fuzz string "nothing changes if it's already a editable value" <|
                 \value ->
-                    Editable value value
+                    editable (==) value
                         |> Editable.edit
-                        |> Expect.equal (Editable value value)
+                        |> Editable.isEditable
+                        |> Expect.equal True
             ]
         , describe "#map"
-            [ fuzz string "map doesn't apply the function to a ReadOnly value" <|
+            [ fuzz string "map doesn't apply the function to a read only value" <|
                 \value ->
-                    ReadOnly value
+                    readonly (==) value
                         |> Editable.map String.toUpper
-                        |> Expect.equal (ReadOnly value)
-            , fuzz string "map applies the function to a Editable value" <|
+                        |> Editable.value
+                        |> Expect.equal value
+            , fuzz string "map applies the function to a editable value" <|
                 \value ->
-                    Editable value value
+                    editable (==) value
                         |> Editable.map String.toUpper
-                        |> Expect.equal (Editable value (String.toUpper value))
+                        |> Editable.value
+                        |> Expect.equal (String.toUpper value)
             ]
         , describe "functor"
             [ fuzz string "identity" <|
                 \x ->
-                    ReadOnly x
+                    readonly (==) x
                         |> Editable.map identity
-                        |> Expect.equal (ReadOnly x)
+                        |> Editable.value
+                        |> Expect.equal x
             , fuzz string "identity (editable)" <|
                 \x ->
-                    Editable x x
+                    editable (==) x
                         |> Editable.map identity
-                        |> Expect.equal (Editable x x)
+                        |> Editable.value
+                        |> Expect.equal x
             , fuzz string "composition" <|
                 \x ->
-                    ReadOnly x
+                    readonly (==) x
                         |> Editable.map ((++) "!" >> (++) "?")
+                        |> Editable.value
                         |> Expect.equal
-                            (ReadOnly x
+                            (readonly (==) x
                                 |> Editable.map ((++) "!")
                                 |> Editable.map ((++) "?")
+                                |> Editable.value
                             )
             , fuzz string "composition (editable)" <|
                 \x ->
-                    Editable x x
+                    editable (==) x
                         |> Editable.map ((++) "!" >> (++) "?")
+                        |> Editable.value
                         |> Expect.equal
-                            (Editable x x
+                            (editable (==) x
                                 |> Editable.map ((++) "!")
                                 |> Editable.map ((++) "?")
+                                |> Editable.value
                             )
             ]
         , describe "#save"
-            [ fuzz2 string string "save makes a Editable ReadOnly with the modified value." <|
+            [ fuzz2 string string "save makes a editable read only with the modified value." <|
                 \a b ->
-                    ReadOnly a
+                    readonly (==) a
                         |> Editable.edit
                         |> Editable.map (always b)
                         |> Editable.save
-                        |> Expect.equal (ReadOnly b)
+                        |> Expect.all
+                            [ Editable.value >> Expect.equal b
+                            , Editable.isEditable >> Expect.equal False
+                            ]
             ]
         , describe "#cancel"
-            [ fuzz2 string string "cancels a change to a Editable and  makes it a ReadOnly with the old value." <|
+            [ fuzz2 string string "cancels a change to a editable and  makes it a read only with the old value." <|
                 \a b ->
-                    ReadOnly a
+                    readonly (==) a
                         |> Editable.edit
                         |> Editable.map (always b)
                         |> Editable.cancel
-                        |> Expect.equal (ReadOnly a)
+                        |> Expect.all
+                            [ Editable.value >> Expect.equal a
+                            , Editable.isEditable >> Expect.equal False
+                            ]
             ]
         , describe "#value"
             [ fuzz2 string string "returns the modified value of a Editable." <|
                 \a b ->
-                    Editable a b
+                    editable (==) a
+                        |> Editable.map (always b)
                         |> Editable.value
                         |> Expect.equal b
-            , fuzz string "returns the value of a ReadOnly." <|
+            , fuzz string "returns the value of a read only." <|
                 \a ->
-                    ReadOnly a
+                    readonly (==) a
                         |> Editable.value
                         |> Expect.equal a
             ]
         , describe "#isDirty"
             [ fuzz2 string string "indicates if a modified value is different from the saved one." <|
                 \a b ->
-                    Editable a b
+                    editable (==) a
+                        |> Editable.map (always b)
                         |> Editable.isDirty
                         |> Expect.equal (a /= b)
-            , fuzz2 string string "return False if `Editable` is `ReadOnly`." <|
+            , fuzz2 string string "return False if `editable` is read only." <|
                 \a b ->
-                    Editable a b
+                    editable (==) a
+                        |> Editable.map (always b)
                         |> Editable.edit
                         |> Editable.save
                         |> Editable.isDirty
-                        |> Expect.equal False
-            ]
-        , describe "#isDirtyWith"
-            [ fuzz2 string string "indicates if a modified value is different from the saved one." <|
-                \a b ->
-                    Editable a b
-                        |> Editable.isDirtyWith (/=)
-                        |> Expect.equal (a /= b)
-            , fuzz2 string string "return False if `Editable` is `ReadOnly`." <|
-                \a b ->
-                    Editable a b
-                        |> Editable.edit
-                        |> Editable.save
-                        |> Editable.isDirtyWith (/=)
                         |> Expect.equal False
             ]
         , describe "#isEditable"
-            [ fuzz2 string string "returns True if an `Editable` is in `Editable` state." <|
+            [ fuzz2 string string "returns True if an `Editable` is in editable state." <|
                 \a b ->
-                    Editable a b
+                    editable (==) a
+                        |> Editable.map (always b)
                         |> Editable.isEditable
                         |> Expect.equal True
-            , fuzz string "returns False if an `Editable` is in `ReadOnly` state." <|
+            , fuzz string "returns False if an `Editable` is in read only state." <|
                 \x ->
-                    ReadOnly x
+                    readonly (==) x
                         |> Editable.isEditable
                         |> Expect.equal False
             ]
         , describe "#isReadOnly"
-            [ fuzz2 string string "returns False if an `Editable` is in `Editable` state." <|
+            [ fuzz2 string string "returns False if an `Editable` is in editable state." <|
                 \a b ->
-                    Editable a b
+                    editable (==) a
+                        |> Editable.map (always b)
                         |> Editable.isReadOnly
                         |> Expect.equal False
-            , fuzz string "returns True if an `Editable` is in `ReadOnly` state." <|
+            , fuzz string "returns True if an `Editable` is in read only state." <|
                 \x ->
-                    ReadOnly x
+                    readonly (==) x
                         |> Editable.isReadOnly
                         |> Expect.equal True
             ]
