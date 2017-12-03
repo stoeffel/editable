@@ -42,9 +42,10 @@ type alias Editable a =
 
 {-| Makes a `ReadOnly` value `Editable`.
 
-    Editable.ReadOnly "old"
+    Editable.readonly (==) "old"
         |> Editable.edit
-        |> Editable.map (always "new") --> Editable "old" "new"
+        |> Editable.map (always "new")
+        |> Editable.value --> "new"
 
 -}
 edit : Editable a -> Editable a
@@ -53,19 +54,24 @@ edit =
 
 
 {-| Apply a function to an `Editable`. This is the function you will call in
-order to update the value of an `Editable.Editable`.
+order to update the value of an `Editable.editable`.
 
-    Editable.ReadOnly "old"
-        |> Editable.map String.toUpper --> ReadOnly "old"
+    Editable.readonly (==) "old"
+        |> Editable.map String.toUpper
+        |> Editable.value --> "old"
 
-    Editable.Editable "old" "old"
-        |> Editable.map String.toUpper --> Editable "old" "OLD"
+    Editable.editable (==) "old"
+        |> Editable.map String.toUpper
+        |> Editable.value --> "OLD"
 
-    Editable.Editable "old" "new"
-        |> Editable.map (\val -> val ++ "er")  --> Editable "old" "newer"
+    Editable.editable (==) "old"
+        |> Editable.map (always "new")
+        |> Editable.map (\val -> val ++ "er")
+        |> Editable.value --> "newer"
 
-    Editable.Editable "old" "old"
-        |> Editable.map (always "new") --> Editable "old" "new"
+    Editable.editable (==) "old"
+        |> Editable.map (always "new")
+        |> Editable.value --> "new"
 
 -}
 map : (a -> a) -> Editable a -> Editable a
@@ -75,13 +81,16 @@ map f x =
 
 {-| Save a modified value. This puts the modified value into the context of `ReadOnly`.
 
-    Editable.Editable "old" "new"
-        |> Editable.save          --> ReadOnly "new"
+    Editable.editable (==) "old"
+        |> Editable.map (always "new")
+        |> Editable.save
+        |> Editable.value --> "new"
 
-    Editable.ReadOnly "old"
+    Editable.readonly (==) "old"
         |> Editable.edit
         |> Editable.map (always "new")
-        |> Editable.save          --> ReadOnly "new"
+        |> Editable.save
+        |> Editable.value --> "new"
 
 -}
 save : Editable a -> Editable a
@@ -92,8 +101,10 @@ save x =
 
 {-| Cancels a modified value. This puts the old value into the context of `ReadOnly`.
 
-    Editable.Editable "old" "new"
-        |> Editable.cancel       --> ReadOnly "old"
+    Editable.editable (==) "old"
+        |> Editable.map (always "new")
+        |> Editable.cancel
+        |> Editable.value --> "old"
 
 -}
 cancel : Editable a -> Editable a
@@ -104,10 +115,11 @@ cancel x =
 
 {-| Returns the current value of an Editable.
 
-    Editable.ReadOnly "old"
+    Editable.readonly (==) "old"
         |> Editable.value  --> "old"
 
-    Editable.Editable "old" "new"
+    Editable.editable (==) "old"
+        |> Editable.map (always "new")
         |> Editable.value  --> "new"
 
 -}
@@ -118,10 +130,10 @@ value =
 
 {-| Indicates if an `Editable` is in `Editable` state.
 
-    Editable.Editable "old" "old"
+    Editable.editable (==) "old"
         |> Editable.isEditable  --> True
 
-    Editable.ReadOnly "old"
+    Editable.readonly (==) "old"
         |> Editable.isEditable  --> False
 
 -}
@@ -132,10 +144,10 @@ isEditable =
 
 {-| Indicates if an `Editable` is in `ReadOnly` state.
 
-    Editable.Editable "old" "old"
+    Editable.editable (==) "old"
         |> Editable.isReadOnly  --> False
 
-    Editable.ReadOnly "old"
+    Editable.readonly (==) "old"
         |> Editable.isReadOnly  --> True
 
 -}
@@ -148,13 +160,14 @@ isReadOnly =
 
 If the `Editable` is `ReadOnly` then we return False.
 
-    Editable.Editable "old" "old"
+    Editable.editable (==) "old"
         |> Editable.isDirty  --> False
 
-    Editable.Editable "old" "new"
+    Editable.editable (==) "old"
+        |> Editable.map (always "new")
         |> Editable.isDirty  --> True
 
-    Editable.ReadOnly "old"
+    Editable.readonly (==) "old"
         |> Editable.isDirty  --> False
 
 -}
