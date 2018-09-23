@@ -1,4 +1,4 @@
-module Tests exposing (..)
+module Tests exposing (all)
 
 import Editable exposing (Editable(..))
 import Expect
