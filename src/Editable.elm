@@ -1,16 +1,4 @@
-module Editable
-    exposing
-        ( Editable(Editable, ReadOnly)
-        , cancel
-        , edit
-        , isDirty
-        , isDirtyWith
-        , isEditable
-        , isReadOnly
-        , map
-        , save
-        , value
-        )
+module Editable exposing (Editable(..), cancel, edit, isDirty, isDirtyWith, isEditable, isReadOnly, map, save, value)
 
 {-| Editable represents a value that can be read-only or editable.
 `ReadOnly a` holds the locked value and `Editable a a` holds both the old and the newly modified value.
