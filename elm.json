@@ -3,7 +3,7 @@
     "name": "stoeffel/editable",
     "summary": "Editable represents a value that can be read-only or editable.",
     "license": "BSD-3-Clause",
-    "version": "1.2.0",
+    "version": "2.0.0",
     "exposed-modules": [
         "Editable"
     ],
