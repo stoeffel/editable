@@ -1,16 +1,4 @@
-module Editable
-    exposing
-        ( Editable(Editable, ReadOnly)
-        , cancel
-        , edit
-        , isDirty
-        , isDirtyWith
-        , isEditable
-        , isReadOnly
-        , map
-        , save
-        , value
-        )
+module Editable exposing (Editable(..), cancel, edit, isDirty, isDirtyWith, isEditable, isReadOnly, map, save, value)
 
 {-| Editable represents a value that can be read-only or editable.
 `ReadOnly a` holds the locked value and `Editable a a` holds both the old and the newly modified value.
@@ -50,8 +38,8 @@ edit x =
         Editable _ _ ->
             x
 
-        ReadOnly value ->
-            Editable value value
+        ReadOnly val ->
+            Editable val val
 
 
 {-| Apply a function to an `Editable`. This is the function you will call in
@@ -110,8 +98,8 @@ save x =
 cancel : Editable a -> Editable a
 cancel x =
     case x of
-        Editable value _ ->
-            ReadOnly value
+        Editable val _ ->
+            ReadOnly val
 
         ReadOnly _ ->
             x
@@ -129,11 +117,11 @@ cancel x =
 value : Editable a -> a
 value x =
     case x of
-        Editable _ value ->
-            value
+        Editable _ val ->
+            val
 
-        ReadOnly value ->
-            value
+        ReadOnly val ->
+            val
 
 
 {-| Indicates if an `Editable` is in `Editable` state.
